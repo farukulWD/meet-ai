@@ -232,7 +232,7 @@ function SignUpView() {
               </div>
             </form>
           </Form>
-          <div className="bg-radial from-green-700 to bg-green-900 relative hidden md:flex flex-col gap-y-4 items-center justify-center">
+          <div className="bg-radial from-sidebar-accent to bg-sidebar relative hidden md:flex flex-col gap-y-4 items-center justify-center">
             <img src="/logo.svg" alt="meet ai" className="h-[90px] w-[90px]" />
             <p className="font-semibold text-white text-2xl">Meet.AI</p>
           </div>

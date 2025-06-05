@@ -10,10 +10,10 @@ export default function HomePageView() {
   if (!session) {
     return <div>Loading...</div>;
   }
+  console.log(session);
   return (
     <div className="flex flex-col p-4 gap-y-4">
-      <h1>Welcome {session.user.name}</h1>
-      <p>Email: {session.user.email}</p>
+      <p>Hello {session.user.name}</p>
       <Button
         onClick={() =>
           authClient.signOut({
