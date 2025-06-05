@@ -14,11 +14,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertTitle } from "@/components/ui/alert";
-import { OctagonAlertIcon } from "lucide-react";
+import { Github, OctagonAlertIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { FaGithub, FaGoogle } from "react-icons/fa";
 
 const formSchema = z
   .object({
@@ -73,6 +74,29 @@ function SignUpView() {
       }
     );
   };
+
+
+  const socialLogin = async (provider: "github" | "google") => {
+      const data = await authClient.signIn.social(
+        {
+          provider: provider,
+          callbackURL:"/"
+        },
+        {
+         
+          onSuccess: (ctx: any) => {
+            // Handle success
+            setPending(false);
+          
+          },
+          onError: ({ error }) => {
+            // Handle error
+            setPending(false);
+            setError(error.message);
+          },
+        }
+      );
+    };
 
   return (
     <div className="flex flex-col gap-6">
@@ -180,18 +204,20 @@ function SignUpView() {
                   <Button
                     disabled={pending}
                     variant={"outline"}
-                    className="w-full"
+                    className="w-full cursor-pointer"
                     type="button"
+                    onClick={() => socialLogin("google")}
                   >
-                    Google
+                    <FaGoogle/>
                   </Button>
                   <Button
                     disabled={pending}
                     variant={"outline"}
-                    className="w-full"
+                    className="w-full cursor-pointer"
                     type="button"
+                    onClick={() => socialLogin("github")}
                   >
-                    Github
+                    <FaGithub/>
                   </Button>
                 </div>
                 <div className="text-sm  text-center">
