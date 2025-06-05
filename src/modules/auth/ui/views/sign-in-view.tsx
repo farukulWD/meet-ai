@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { FaGithub, FaGoogle } from "react-icons/fa";
 
 const formSchema = z.object({
   email: z.string().min(2).email("Invalid email address"),
@@ -53,7 +54,29 @@ function SignInView() {
         onSuccess: (ctx: any) => {
           // Handle success
           setPending(false);
-          router.push("/dashboard");
+          router.push("/");
+        },
+        onError: ({ error }) => {
+          // Handle error
+          setPending(false);
+          setError(error.message);
+        },
+      }
+    );
+  };
+
+  const socialLogin = async (provider: "github" | "google") => {
+    const data = await authClient.signIn.social(
+      {
+        provider: provider,
+        callbackURL: "/",
+      },
+      {
+       
+        onSuccess: (ctx: any) => {
+          // Handle success
+          setPending(false);
+         
         },
         onError: ({ error }) => {
           // Handle error
@@ -120,7 +143,11 @@ function SignInView() {
                     <AlertTitle className="">{error}</AlertTitle>
                   </Alert>
                 )}
-                <Button disabled={pending} type="submit" className="w-full cursor-pointer">
+                <Button
+                  disabled={pending}
+                  type="submit"
+                  className="w-full cursor-pointer"
+                >
                   Sign In
                 </Button>
                 <div className="relative text-sm flex justify-center items-center text-center after:content-[''] after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
@@ -129,11 +156,23 @@ function SignInView() {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button disabled={pending} variant={"outline"} className="w-full" type="button">
-                    Google
+                  <Button
+                    disabled={pending}
+                    variant={"outline"}
+                    className="w-full cursor-pointer" 
+                    type="button"
+                    onClick={() => socialLogin("google")}
+                  >
+                    <FaGoogle />
                   </Button>
-                  <Button disabled={pending} variant={"outline"} className="w-full" type="button">
-                    Github
+                  <Button
+                    disabled={pending}
+                    variant={"outline"}
+                    className="w-full cursor-pointer"
+                    type="button"
+                    onClick={() => socialLogin("github")}
+                  >
+                    <FaGithub />
                   </Button>
                 </div>
                 <div className="text-sm  text-center">
