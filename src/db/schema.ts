@@ -1,5 +1,6 @@
 // drizzle/schema.ts
 import { pgTable, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { nanoid } from "nanoid";
 
 // User Table
 export const user = pgTable("user", {
@@ -15,7 +16,9 @@ export const user = pgTable("user", {
 // Session Table
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
-  userId: text("userId").notNull().references(() => user.id),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id),
   token: text("token").notNull(),
   expiresAt: timestamp("expiresAt").notNull(),
   ipAddress: text("ipAddress"),
@@ -27,7 +30,9 @@ export const session = pgTable("session", {
 // Account Table
 export const account = pgTable("account", {
   id: text("id").primaryKey(),
-  userId: text("userId").notNull().references(() => user.id),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id),
   accountId: text("accountId").notNull(),
   providerId: text("providerId").notNull(),
   accessToken: text("accessToken"),
@@ -49,4 +54,19 @@ export const verification = pgTable("verification", {
   expiresAt: timestamp("expiresAt").notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
+// Agents table
+
+export const agents = pgTable("agents", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  name: text("name").notNull(),
+  user_id: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  instructions: text("instruction").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
