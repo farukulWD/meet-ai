@@ -77,7 +77,7 @@
   --sidebar-primary-foreground: oklch(0.985 0 0);
   /* sidebar active color  */
   --sidebar-accent: oklch(0.34 0.0601 171.21);
-    /* sidebar active text color  */
+  /* sidebar active text color  */
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
@@ -123,5 +123,12 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  button:not(:disable),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
