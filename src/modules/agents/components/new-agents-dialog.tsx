@@ -3,12 +3,12 @@
 import ResponsiveDialog from "@/components/responsive-dialog";
 import AgentForm from "./agent-form";
 
-interface NewDialogProps {
+interface NewAgentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-function NewAgentDialog({ open, onOpenChange }: NewDialogProps) {
+function NewAgentDialog({ open, onOpenChange }: NewAgentDialogProps) {
   return (
     <ResponsiveDialog
       open={open}
