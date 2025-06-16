@@ -8,9 +8,9 @@ import React from "react";
 import { columns } from "../../components/columns";
 import EmptyState from "@/components/empty-state";
 import { useAgentFilters } from "../../hooks/use-agents-filters";
-import DataPagination from "../../components/data-paginaton";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table";
+import DataPagination from "@/components/data-paginaton";
 
 function AgentsView() {
   const router = useRouter();
