@@ -121,7 +121,7 @@ export default function MeetingForm({
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g Math tutor" {...field} />
+                  <Input placeholder="e.g Math Consultation" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
