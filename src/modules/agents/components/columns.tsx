@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { TAgentGetOne } from "../types";
+import { TAgentsGetMany } from "../types";
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { CornerDownRightIcon, VideoIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ export type Payment = {
   email: string;
 };
 
-export const columns: ColumnDef<TAgentGetOne>[] = [
+export const columns: ColumnDef<TAgentsGetMany[number]>[] = [
   {
     accessorKey: "name",
     header: "Agent Name",
