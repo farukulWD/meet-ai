@@ -80,7 +80,7 @@ export default function MeetingForm({
           );
         }
 
-        onSuccess?.();
+        onSuccess?.(initialValues?.id);
       },
 
       onError: (error) => {
