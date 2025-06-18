@@ -42,6 +42,9 @@ export function TRPCReactProvider(
     createTRPCClient<AppRouter>({
       links: [
         httpBatchLink({
+          headers: {
+            "ngrok-skip-browser-warning": "true",
+          },
           // transformer: superjson, <-- if you use a data transformer
           url: getUrl(),
         }),
