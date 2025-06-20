@@ -15,15 +15,9 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import humanizeDuration from "humanize-duration";
-import { cn } from "@/lib/utils";
+import { cn, formateDuration } from "@/lib/utils";
 
-const formateDuration = (second: number) => {
-  return humanizeDuration(second * 1000, {
-    largest: 1,
-    round: true,
-    units: ["h", "m", "s"],
-  });
-};
+
 
 const statusIconMap = {
   upcoming: ClockArrowUpIcon,
