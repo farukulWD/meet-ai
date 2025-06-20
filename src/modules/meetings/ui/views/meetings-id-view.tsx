@@ -17,6 +17,7 @@ import UpcomingState from "../../components/upcoming-state";
 import ActiveState from "../../components/active-state";
 import CancelledState from "../../components/cancelled-state";
 import ProcessingState from "../../components/processing-state";
+import CompletedState from "../../components/completed-state";
 interface Props {
   meetingId: string;
 }
@@ -86,7 +87,7 @@ function MeetingIdView({ meetingId }: Props) {
         {isCancelled && <CancelledState />}
         {isProcessing && <ProcessingState />}
         {isActive && <ActiveState meetingId={meetingId} />}
-        {isCompleted && <div>Completed </div>}
+        {isCompleted && <CompletedState data={data} />}
         {isUpcoming && (
           <UpcomingState
             meetingId={meetingId}
