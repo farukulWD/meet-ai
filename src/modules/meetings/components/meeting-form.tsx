@@ -28,6 +28,7 @@ import { meetingsInsertSchema } from "../schema";
 import { MeetingGetOne } from "../types";
 import CommandSelect from "@/components/command-select";
 import NewAgentDialog from "@/modules/agents/components/new-agents-dialog";
+import { useRouter } from "next/navigation";
 interface MeetingForm {
   onSuccess?: (id?: string) => void;
   onCancel?: () => void;
@@ -42,6 +43,7 @@ export default function MeetingForm({
   const queryClient = useQueryClient();
   const [openNewAgentDialog, setOpenNewAgentDialog] = useState(false);
   const [agentSearch, setAgentSearch] = useState("");
+  const router = useRouter();
 
   const agents = useQuery(
     trpc.agents.getMany.queryOptions({
@@ -56,14 +58,19 @@ export default function MeetingForm({
         await queryClient.invalidateQueries(
           trpc.meetings.getMany.queryOptions({})
         );
-        //  TODO invalidate free tier user
+        await queryClient.invalidateQueries(
+          trpc.premium.getFreeUsage.queryOptions()
+        );
 
         onSuccess?.(data?.id);
       },
 
       onError: (error) => {
         toast.error(error.message);
-        // TODO if error forbidden redirect tp /upgrade
+
+        if (error.data?.code === "FORBIDDEN") {
+          router.push("/upgrade");
+        }
       },
     })
   );
@@ -85,7 +92,6 @@ export default function MeetingForm({
 
       onError: (error) => {
         toast.error(error.message);
-        // TODO if error forbidden redirect tp /upgrade
       },
     })
   );
