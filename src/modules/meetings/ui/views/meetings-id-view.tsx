@@ -90,13 +90,7 @@ function MeetingIdView({ meetingId }: Props) {
         {isProcessing && <ProcessingState />}
         {isActive && <ActiveState meetingId={meetingId} />}
         {isCompleted && <CompletedState data={data} />}
-        {isUpcoming && (
-          <UpcomingState
-            meetingId={meetingId}
-            isCanceling={false}
-            onCancelMeeting={() => {}}
-          />
-        )}
+        {isUpcoming && <UpcomingState meetingId={meetingId} />}
       </div>
     </>
   );
