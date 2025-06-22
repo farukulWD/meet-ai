@@ -1,5 +1,7 @@
 # Meet AI
 
+![Meet AI Project Screenshot](https://i.ibb.co/TD5W20w9/screencapture-meet-ai-eta-vercel-app-meetings-2025-06-22-23-43-14.png)
+
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://meet-ai-eta.vercel.app/)
 
 Meet AI is a modern, AI-powered meeting management and video conferencing web application. It offers seamless meeting scheduling, live video calls, AI-generated meeting summaries, searchable transcripts, and interactive AI chat — all designed to enhance productivity and collaboration.
