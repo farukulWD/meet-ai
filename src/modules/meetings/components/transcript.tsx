@@ -17,7 +17,7 @@ interface Props {
 
 function Transcript({ meetingId }: Props) {
   const trpc = useTRPC();
-  const { data } = useQuery(
+  const { data,isError,error } = useQuery(
     trpc.meetings.getTranscript.queryOptions({ id: meetingId })
   );
 
@@ -26,6 +26,8 @@ function Transcript({ meetingId }: Props) {
   const filteredData = (data ?? []).filter((item) =>
     item.text.toString().toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+ 
 
   return (
     <div className="bg-white rounded-lg border px-4 py-5 flex flex-col gap-y-5 w-full">

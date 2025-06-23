@@ -43,7 +43,7 @@ function UpgradeView() {
               onClick = () => authClient.customer.portal();
             }
 
-            console.log(product);
+         
 
             return (
               <PricingCard

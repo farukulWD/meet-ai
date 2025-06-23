@@ -37,6 +37,7 @@ export const meetingsRouter = createTRPCRouter({
       id: ctx.auth.user.id,
       role: "admin",
     });
+
     return token;
   }),
   getTranscript: protectedProcedure
@@ -58,6 +59,7 @@ export const meetingsRouter = createTRPCRouter({
       if (!existingMeeting.transcriptUrl) {
         return [];
       }
+
       const transcript = await fetch(existingMeeting.transcriptUrl)
         .then((res) => res.text())
         .then((text) => JSONL.parse<StreamTranscriptItem>(text))
@@ -81,6 +83,7 @@ export const meetingsRouter = createTRPCRouter({
               generateAvatarUri({ variant: "initials", seed: user.name ?? "" }),
           }))
         );
+
       const agentSpeakers = await db
         .select()
         .from(agents)
@@ -88,13 +91,15 @@ export const meetingsRouter = createTRPCRouter({
         .then((agents) =>
           agents.map((agent) => ({
             ...agent,
-            image:
-              user?.image ??
-              generateAvatarUri({ variant: "botttsNeutral", seed: agent.name }),
+            image: generateAvatarUri({
+              variant: "botttsNeutral",
+              seed: agent.name,
+            }),
           }))
         );
 
       const speakers = [...userSpeakers, ...agentSpeakers];
+
       const transcriptWithSpeaker = transcript.map((item) => {
         const speaker = speakers.find(
           (speaker) => speaker.id === item.speaker_id
@@ -121,6 +126,7 @@ export const meetingsRouter = createTRPCRouter({
           },
         };
       });
+
       return transcriptWithSpeaker;
     }),
   generateToken: protectedProcedure.mutation(async ({ ctx }) => {

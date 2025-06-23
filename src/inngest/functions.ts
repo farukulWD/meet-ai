@@ -43,7 +43,7 @@ export const meetingsProcessing = inngest.createFunction(
       return JSONL.parse<StreamTranscriptItem>(response);
     });
 
-    const transcriptWithSpeaker = step.run("add_speaker", async () => {
+    const transcriptWithSpeaker = await step.run("add_speaker", async () => {
       const speakerIds = [
         ...new Set(transcript.map((item) => item.speaker_id)),
       ];
@@ -56,7 +56,7 @@ export const meetingsProcessing = inngest.createFunction(
       const agentSpeakers = await db
         .select()
         .from(agents)
-        .where(inArray(user.id, speakerIds))
+        .where(inArray(agents.id, speakerIds))
         .then((agents) => agents.map((agent) => ({ ...agent })));
 
       const speakers = [...userSpeakers, ...agentSpeakers];

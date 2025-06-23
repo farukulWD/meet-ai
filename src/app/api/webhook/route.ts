@@ -163,6 +163,8 @@ export async function POST(req: NextRequest) {
     });
   } else if (eventType === "call.recording_ready") {
     const event = payload as CallRecordingReadyEvent;
+    
+
     const meetingId = event.call_cid.split(":")[1];
     await db
       .update(meetings)
@@ -170,8 +172,9 @@ export async function POST(req: NextRequest) {
         recordingUrl: event.call_recording.url,
       })
       .where(eq(meetings.id, meetingId));
-  } else if (eventType === "message_new") {
+  } else if (eventType === "message.new") {
     const event = payload as MessageNewEvent;
+   
     const userId = event.user?.id;
     const channelId = event.channel_id;
     const text = event.message?.text;

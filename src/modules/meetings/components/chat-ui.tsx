@@ -48,13 +48,13 @@ function ChatUI({
     },
   });
 
-
-
   useEffect(() => {
     if (!client) return;
     const channel = client.channel("messaging", meetingId, {
       members: [userId],
     });
+
+    
 
     setChannel(channel);
   }, [client, meetingId, meetingName, userId]);
@@ -67,6 +67,7 @@ function ChatUI({
       />
     );
   }
+
   return (
     <div className="bg-white rounded-lg border overflow-hidden">
       <Chat client={client}>

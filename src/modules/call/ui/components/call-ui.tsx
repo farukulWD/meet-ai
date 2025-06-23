@@ -23,7 +23,6 @@ function CallUI({ meetingName }: Props) {
     setShow("ended");
   };
 
-  console.log(show);
   return (
     <StreamTheme className="h-full">
       {show === "lobby" && <CallLobby onJoin={() => handleJoin()} />}
