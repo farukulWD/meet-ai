@@ -10,9 +10,10 @@
 </g>
 <rect x="20" y="45" width="34" height="34" rx="6" fill="#F5F6F6"/>
 
-<rect x="63" y="49" width="72" height="4" rx="2" fill="#17A34A"/>
-<rect x="63" y="61" width="64" height="4" rx="2" fill="#D5F2E0"/>
-<rect x="63" y="73" width="94" height="4" rx="2" fill="#E9F7F0"/>
+<rect x="63" y="49" width="72" height="4" rx="2" fill="#FC5800"/>   
+<rect x="63" y="61" width="64" height="4" rx="2" fill="#FFD1A6"/>   
+<rect x="63" y="73" width="94" height="4" rx="2" fill="#FFF0E6"/>   
+
 
 <defs>
   <filter id="filter0_d" x="20.125" y="25.0625" width="148.75" height="75.75" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
