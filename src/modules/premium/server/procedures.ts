@@ -34,7 +34,8 @@ export const premiumRouter = createTRPCRouter({
     const customer = await polarClient.customers.getStateExternal({
       externalId: ctx.auth.user.id,
     });
-    const subscription = customer.activeSubscriptions[0];
+    
+    const subscription =  customer.activeSubscriptions[0];
 
     if (subscription) {
       return null;
