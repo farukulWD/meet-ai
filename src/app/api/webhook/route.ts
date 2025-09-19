@@ -51,7 +51,6 @@ export async function POST(req: NextRequest) {
 
   if (eventType === "call.session_started") {
     const event = payload as CallSessionStartedEvent;
-
     const meetingId = event.call.custom?.meetingId;
 
     if (!meetingId) {
@@ -60,6 +59,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // 1) Find meeting
     const [existingMeeting] = await db
       .select()
       .from(meetings)
@@ -79,11 +80,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // 2) Mark meeting active
     await db
       .update(meetings)
       .set({ status: "active", startedAt: new Date() })
       .where(eq(meetings.id, existingMeeting.id));
 
+    // 3) Load agent
     const [existingAgent] = await db
       .select()
       .from(agents)
@@ -93,23 +97,73 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Agent not found" }, { status: 400 });
     }
 
+    // 4) Connect to Stream Video + OpenAI Realtime
     const call = streamVideo.video.call("default", meetingId);
-
     const realtimeClient = await streamVideo.video.connectOpenAi({
       call,
       openAiApiKey: process.env.OPENAI_API_KEY!,
       agentUserId: existingAgent.id,
     });
 
+    // 5) Generate greeting text
+    const MAX_INSTR_LEN = 300;
+    const shortInstructions =
+      existingAgent.instructions &&
+      existingAgent.instructions.length > MAX_INSTR_LEN
+        ? existingAgent.instructions.slice(0, MAX_INSTR_LEN).trim() + "..."
+        : existingAgent.instructions || "";
+
+    const greetingText = `Hello, I'm ${existingAgent.name}. ${shortInstructions}`;
+
+    // 6) Update session instructions
     await realtimeClient.updateSession({
-      instructions: existingAgent.instructions,
+      instructions: `${existingAgent.instructions || ""}
+  
+  When asked to "greet now", introduce yourself like this:
+  "${greetingText}"`,
     });
-    const greeting = `Hello, I'm ${existingAgent.name}. ${existingAgent.instructions}`;
-    await realtimeClient.send({
-      type: "message",
-      role: "assistant",
-      content: greeting,
-    });
+
+    // 7) Trigger assistant to speak greeting
+    try {
+      await realtimeClient.sendUserMessageContent([
+        { type: "input_text", text: "greet now" },
+      ]);
+    } catch (err) {
+      console.error("Realtime greeting failed:", err);
+    }
+
+    // 8) Also send text greeting into chat channel
+    try {
+      const avatarUrl = generateAvatarUri({
+        seed: existingAgent.name,
+        variant: "botttsNeutral",
+      });
+
+      await streamChat.upsertUser({
+        id: existingAgent.id,
+        name: existingAgent.name,
+        image: avatarUrl,
+      });
+
+      const channel = streamChat.channel("messaging", meetingId);
+      await channel.watch();
+
+      await channel.sendMessage({
+        text: greetingText,
+        user: {
+          id: existingAgent.id,
+          name: existingAgent.name,
+          image: avatarUrl,
+        },
+      });
+    } catch (err) {
+      console.error("Chat greeting failed:", err);
+    }
+
+    return NextResponse.json(
+      { message: "Agent greeted successfully" },
+      { status: 200 }
+    );
   } else if (eventType === "call.session_participate_left") {
     const event = payload as CallSessionParticipantLeftEvent;
     const meetingId = event.call_cid.split(":")[1];
