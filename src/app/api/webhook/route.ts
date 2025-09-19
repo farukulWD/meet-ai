@@ -11,9 +11,8 @@ import {
   CallSessionParticipantLeftEvent,
   CallSessionStartedEvent,
   CallTranscriptionReadyEvent,
-  CallSessionParticipantJoinedEvent
 } from "@stream-io/node-sdk";
-import { and, eq, or, not } from "drizzle-orm";
+import { and, eq, not } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { generateAvatarUri } from "@/lib/avatar";
 import { streamChat } from "@/lib/stream-chat";
@@ -50,17 +49,17 @@ export async function POST(req: NextRequest) {
 
   const eventType = (payload as Record<string, unknown>)?.type;
 
-  // -------------------------------
-  // Session Started → mark active + load agent
-  // -------------------------------
   if (eventType === "call.session_started") {
     const event = payload as CallSessionStartedEvent;
+
     const meetingId = event.call.custom?.meetingId;
 
     if (!meetingId) {
-      return NextResponse.json({ error: "Missing meeting id" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing meeting id" },
+        { status: 400 }
+      );
     }
-
     const [existingMeeting] = await db
       .select()
       .from(meetings)
@@ -80,7 +79,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
     await db
       .update(meetings)
       .set({ status: "active", startedAt: new Date() })
@@ -106,129 +104,30 @@ export async function POST(req: NextRequest) {
     await realtimeClient.updateSession({
       instructions: existingAgent.instructions,
     });
-  }
-
-  // -------------------------------
-  // Participant Joined → greet if it's the AI agent
-  // -------------------------------
-  else if (eventType === "call.session_participant_joined") {
-    const event = payload as CallSessionParticipantJoinedEvent;
+  } else if (eventType === "call.session_participate_left") {
+    const event = payload as CallSessionParticipantLeftEvent;
     const meetingId = event.call_cid.split(":")[1];
-    const participantId = event.participant.user.id;
 
-    if (!meetingId || !participantId) {
+    if (!meetingId) {
       return NextResponse.json(
-        { error: "Missing meetingId or participantId" },
+        { error: "Missing meeting id" },
         { status: 400 }
       );
     }
 
-    const [existingMeeting] = await db
-      .select()
-      .from(meetings)
-      .where(eq(meetings.id, meetingId));
+    const call = streamVideo.video.call("default", meetingId);
+    await call.end();
 
-    if (!existingMeeting) {
-      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
-    }
-
-    const [existingAgent] = await db
-      .select()
-      .from(agents)
-      .where(eq(agents.id, existingMeeting.agentId));
-
-    if (!existingAgent) {
-      return NextResponse.json({ error: "Agent not found" }, { status: 404 });
-    }
-
-    if (participantId === existingAgent.id) {
-      // Agent just joined — greet
-      const call = streamVideo.video.call("default", meetingId);
-      const realtimeClient = await streamVideo.video.connectOpenAi({
-        call,
-        openAiApiKey: process.env.OPENAI_API_KEY!,
-        agentUserId: existingAgent.id,
-      });
-
-      await realtimeClient.updateSession({
-        instructions: existingAgent.instructions,
-      });
-
-      const greetingText = `Hello, I'm ${existingAgent.name}. I'll be assisting with this meeting.`;
-
-      try {
-        await realtimeClient.sendUserMessageContent([
-          { type: "input_text", text: "greet now" },
-        ]);
-      } catch (err) {
-        console.error("Failed to trigger AI greeting:", err);
-      }
-
-      const avatarUrl = generateAvatarUri({
-        seed: existingAgent.name,
-        variant: "botttsNeutral",
-      });
-
-      await streamChat.upsertUser({
-        id: existingAgent.id,
-        name: existingAgent.name,
-        image: avatarUrl,
-      });
-
-      const channel = streamChat.channel("messaging", meetingId);
-      await channel.watch();
-
-      await channel.sendMessage({
-        text: greetingText,
-        user: {
-          id: existingAgent.id,
-          name: existingAgent.name,
-          image: avatarUrl,
-        },
-      });
-    }
-
-    return NextResponse.json({ message: "Join handled" }, { status: 200 });
-  }
-
-  // -------------------------------
-  // Participant Left → end call if agent leaves
-  // -------------------------------
-  else if (eventType === "call.session_participant_left") {
-    const event = payload as CallSessionParticipantLeftEvent;
-    const meetingId = event.call_cid.split(":")[1];
-    const participantId = event.participant.user.id;
-
-    if (!meetingId) {
-      return NextResponse.json({ error: "Missing meeting id" }, { status: 400 });
-    }
-
-    const [existingMeeting] = await db
-      .select()
-      .from(meetings)
-      .where(eq(meetings.id, meetingId));
-
-    if (!existingMeeting) {
-      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
-    }
-
-    if (participantId === existingMeeting.agentId) {
-      const call = streamVideo.video.call("default", meetingId);
-      await call.end();
-    }
-
-    return NextResponse.json({ message: "Leave handled" }, { status: 200 });
-  }
-
-  // -------------------------------
-  // Session Ended → mark processing
-  // -------------------------------
-  else if (eventType === "call.session_ended") {
+    return NextResponse.json({ message: "Call ended" }, { status: 200 });
+  } else if (eventType === "call.session_ended") {
     const event = payload as CallEndedEvent;
     const meetingId = event.call.custom?.meetingId;
 
     if (!meetingId) {
-      return NextResponse.json({ error: "Missing meeting id" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing meeting id" },
+        { status: 400 }
+      );
     }
 
     await db
@@ -238,15 +137,9 @@ export async function POST(req: NextRequest) {
         endedAt: new Date(),
       })
       .where(and(eq(meetings.id, meetingId), eq(meetings.status, "active")));
-  }
-
-  // -------------------------------
-  // Transcription Ready
-  // -------------------------------
-  else if (eventType === "call.transcription_ready") {
+  } else if (eventType === "call.transcription_ready") {
     const event = payload as CallTranscriptionReadyEvent;
     const meetingId = event.call_cid.split(":")[1];
-
     const [updateMeeting] = await db
       .update(meetings)
       .set({
@@ -254,9 +147,11 @@ export async function POST(req: NextRequest) {
       })
       .where(eq(meetings.id, meetingId))
       .returning();
-
     if (!updateMeeting) {
-      return NextResponse.json({ error: "Meeting not found!" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Meeting not found!" },
+        { status: 404 }
+      );
     }
 
     await inngest.send({
@@ -266,35 +161,27 @@ export async function POST(req: NextRequest) {
         transcriptUrl: updateMeeting.transcriptUrl,
       },
     });
-  }
-
-  // -------------------------------
-  // Recording Ready
-  // -------------------------------
-  else if (eventType === "call.recording_ready") {
+  } else if (eventType === "call.recording_ready") {
     const event = payload as CallRecordingReadyEvent;
-    const meetingId = event.call_cid.split(":")[1];
+    
 
+    const meetingId = event.call_cid.split(":")[1];
     await db
       .update(meetings)
       .set({
         recordingUrl: event.call_recording.url,
       })
       .where(eq(meetings.id, meetingId));
-  }
-
-  // -------------------------------
-  // Chat Message → AI response
-  // -------------------------------
-  else if (eventType === "message.new") {
+  } else if (eventType === "message.new") {
     const event = payload as MessageNewEvent;
+   
     const userId = event.user?.id;
     const channelId = event.channel_id;
     const text = event.message?.text;
 
     if (!userId || !channelId || !text) {
       return NextResponse.json(
-        { error: "Missing required field!" },
+        { error: "Messing required field!" },
         { status: 404 }
       );
     }
@@ -302,17 +189,13 @@ export async function POST(req: NextRequest) {
     const [existingMeeting] = await db
       .select()
       .from(meetings)
-      .where(
-        and(
-          eq(meetings.id, channelId),
-          or(eq(meetings.status, "completed"), eq(meetings.status, "active"))
-        )
-      );
-
+      .where(and(eq(meetings.id, channelId), eq(meetings.status, "completed")));
     if (!existingMeeting) {
-      return NextResponse.json({ error: "Meeting not found!" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Meeting not found!" },
+        { status: 404 }
+      );
     }
-
     const [existingAgent] = await db
       .select()
       .from(agents)
@@ -324,15 +207,23 @@ export async function POST(req: NextRequest) {
 
     if (userId !== existingAgent.id) {
       const instructions = `
-      You are an AI assistant helping the user revisit or continue a meeting.
-      Meeting summary:
+      You are an AI assistant helping the user revisit a recently completed meeting.
+      Below is a summary of the meeting, generated from the transcript:
+      
       ${existingMeeting.summery}
-
-      Your original behavioral instructions:
+      
+      The following are your original instructions from the live meeting assistant. Please continue to follow these behavioral guidelines as you assist the user:
+      
       ${existingAgent.instructions}
-
-      Use the meeting summary and conversation history to provide clear, concise, and accurate answers.
-      If the summary lacks info, politely let the user know.
+      
+      The user may ask questions about the meeting, request clarifications, or ask for follow-up actions.
+      Always base your responses on the meeting summary above.
+      
+      You also have access to the recent conversation history between you and the user. Use the context of previous messages to provide relevant, coherent, and helpful responses. If the user's question refers to something discussed earlier, make sure to take that into account and maintain continuity in the conversation.
+      
+      If the summary does not contain enough information to answer a question, politely let the user know.
+      
+      Be concise, helpful, and focus on providing accurate information from the meeting and the ongoing conversation.
       `;
 
       const channel = streamChat.channel("messaging", channelId);
@@ -358,7 +249,10 @@ export async function POST(req: NextRequest) {
       const GPTResponseText = GPTResponse.choices[0].message.content;
 
       if (!GPTResponseText) {
-        return NextResponse.json({ error: "No response from gpt" }, { status: 400 });
+        return NextResponse.json(
+          { error: "No response from gpt" },
+          { status: 400 }
+        );
       }
 
       const avatarUrl = generateAvatarUri({
@@ -366,13 +260,13 @@ export async function POST(req: NextRequest) {
         variant: "botttsNeutral",
       });
 
-      await streamChat.upsertUser({
+      streamChat.upsertUser({
         id: existingAgent.id,
         name: existingAgent.name,
         image: avatarUrl,
       });
 
-      await channel.sendMessage({
+      channel.sendMessage({
         text: GPTResponseText,
         user: {
           id: existingAgent.id,
@@ -383,5 +277,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ message: "Event handled" }, { status: 200 });
+  return NextResponse.json({ message: "Event ignored" }, { status: 200 });
 }
