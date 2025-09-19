@@ -11,6 +11,7 @@ import {
   CallSessionParticipantLeftEvent,
   CallSessionStartedEvent,
   CallTranscriptionReadyEvent,
+  CallSessionParticipantJoinedEvent
 } from "@stream-io/node-sdk";
 import { and, eq, not } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -104,6 +105,11 @@ export async function POST(req: NextRequest) {
     await realtimeClient.updateSession({
       instructions: existingAgent.instructions,
     });
+  } else if (eventType === "call.session_participant_joined"){
+    const event = payload as CallSessionParticipantJoinedEvent;
+    const meetingId = event.call_cid.split(":")[1];
+    console.log(event,meetingId)
+    console.log("participant joined",event.participant)
   } else if (eventType === "call.session_participate_left") {
     const event = payload as CallSessionParticipantLeftEvent;
     const meetingId = event.call_cid.split(":")[1];
