@@ -104,34 +104,13 @@ export async function POST(req: NextRequest) {
     await realtimeClient.updateSession({
       instructions: existingAgent.instructions,
     });
-
-    // Send a greeting message from the agent into the meeting chat channel
-    try {
-      const avatarUrl = generateAvatarUri({
-        seed: existingAgent.name,
-        variant: "botttsNeutral",
-      });
-
-      await streamChat.upsertUser({
-        id: existingAgent.id,
-        name: existingAgent.name,
-        image: avatarUrl,
-      });
-
-      const channel = streamChat.channel("messaging", meetingId);
-      await channel.create();
-      await channel.sendMessage({
-        text: `Hello, I'm ${existingAgent.name}. ${existingAgent.instructions}`,
-        user: {
-          id: existingAgent.id,
-          name: existingAgent.name,
-          image: avatarUrl,
-        },
-      });
-    } catch (err) {
-      // Ignore chat greeting failures; do not block call start
-    }
-  } else if (eventType === "call.session_participant_left") {
+    const greeting = `Hello, I'm ${existingAgent.name}. ${existingAgent.instructions}`;
+    await realtimeClient.send({
+      type: "message",
+      role: "assistant",
+      content: greeting,
+    });
+  } else if (eventType === "call.session_participate_left") {
     const event = payload as CallSessionParticipantLeftEvent;
     const meetingId = event.call_cid.split(":")[1];
 
@@ -200,7 +179,6 @@ export async function POST(req: NextRequest) {
       .where(eq(meetings.id, meetingId));
   } else if (eventType === "message.new") {
     const event = payload as MessageNewEvent;
-
     const userId = event.user?.id;
     const channelId = event.channel_id;
     const text = event.message?.text;
